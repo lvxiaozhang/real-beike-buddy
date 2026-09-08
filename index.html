@@ -795,8 +795,9 @@
 
   <!-- Q5: 欣赏的名师 -->
   <div class="card">
-    <h2><span class="num">5</span>您欣赏的名师 <span class="badge badge-optional">加分项·可选</span></h2>
-    <div class="hint">选一位您欣赏的名师，后续生成的教学设计会带上其研究优势及风格；若想了解某位名师的教学风格，选中后下方会出现课例视频搜索入口，可以观看了解后再选择或者可以跳过。</div>
+    <h2><span class="num">5</span>选一位名师来模仿 <span class="badge badge-optional" id="q5_badge">推荐模仿·可选</span></h2>
+    <div class="hint">模仿是最高效的学习——教师的成长，正是在模仿中逐渐形成个人教学风格乃至教学思想。选一位名师，生成的教学设计会带上其研究优势与风格；选中后下方会出现课例视频搜索入口，可以先看再选，也可以跳过。</div>
+    <div class="hint" id="q5_match_tip" style="display:none; margin:6px 0; color:var(--brand, #7C3AED); font-weight:600;">选好前面的学段与学科后，这里会自动匹配名师。</div>
     <label>按学段×学科自动匹配名师（选填）</label>
     <select id="q5_master">
       <option value="">跳过 / 未选</option>
@@ -1202,6 +1203,7 @@ function updateMasterPool() {
   // 清除旧选项（保留前两个固定项）
   while (select.options.length > 2) select.remove(2);
 
+  const tip = document.getElementById('q5_match_tip');
   if (level && subject) {
     const key = level + '_' + subject;
     const pool = MASTER_POOL[key] || [];
@@ -1211,6 +1213,15 @@ function updateMasterPool() {
       opt.textContent = m.name + ' ｜ ' + m.style + ' ｜ 优势：' + m.strength;
       select.appendChild(opt);
     });
+    if (tip) {
+      tip.textContent = pool.length
+        ? '已按「' + level + '·' + subject + '」为你匹配 ' + pool.length + ' 位名师，任选一位即可模仿其风格（也可跳过）。'
+        : '暂未收录该学科的名师，可在下方自填名师姓名或风格描述。';
+      tip.style.display = 'block';
+    }
+  } else if (tip) {
+    tip.textContent = '选好前面的学段与学科后，这里会自动匹配名师。';
+    tip.style.display = 'block';
   }
   // 添加"其他"选项
   const otherOpt = document.createElement('option');
