@@ -811,7 +811,7 @@
     </select>
     <div id="q5_recommend_wrap" class="hidden" style="margin-top:10px;">
       <div class="hint" style="margin:0 0 6px;">根据你的研究要素／风格，推荐这几位名师（点击即选用，并自动给出课例视频入口）：</div>
-      <div id="q5_recommend_btns" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <div id="q5_recommend_btns" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
     <label>按学段×学科自动匹配名师（选填）</label>
     <select id="q5_master">
@@ -1327,10 +1327,13 @@ function renderRecommend() {
     return;
   }
   box.innerHTML = res.list.map(function(x) {
-    const tag = x.hits.length ? ' ｜ 见长：' + x.hits.join('、') : '';
+    const tag = x.hits.length ? '<div style="margin-top:3px; font-size:12px; color:#7C3AED; font-weight:700;">见长：' + x.hits.join('、') + '</div>' : '';
     return '<button type="button" class="rec-btn" data-master="' + x.m.name + '|' + x.m.style + '|' + x.m.strength + '" ' +
-      'style="padding:6px 10px; border:1px solid var(--brand, #7C3AED); background:#fff; color:var(--brand, #7C3AED); border-radius:8px; cursor:pointer; font-size:13px;">' +
-      x.m.name + ' ｜ ' + x.m.style + tag + '</button>';
+      'style="display:block; text-align:left; padding:8px 12px; border:1px solid var(--brand, #7C3AED); background:#fff; color:#333; border-radius:10px; cursor:pointer; font-size:13px; line-height:1.5; max-width:100%;">' +
+      '<div><span style="color:var(--brand, #7C3AED); font-weight:700; font-size:14px;">' + x.m.name + '</span>' +
+      '<span style="color:#555;"> ｜ 风格：' + x.m.style + '</span></div>' +
+      '<div style="margin-top:2px; color:#555;">研究专长／优势：' + x.m.strength + '</div>' + tag +
+      '</button>';
   }).join('');
   box.querySelectorAll('.rec-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
