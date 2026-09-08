@@ -799,7 +799,7 @@
     <div class="hint">模仿是最高效的学习——教师的成长，正是在模仿中逐渐形成个人教学风格乃至教学思想。选一位名师，生成的教学设计会带上其研究优势与风格；选中后下方会出现课例视频搜索入口，可以先看再选，也可以跳过。</div>
     <div class="hint" id="q5_match_tip" style="display:none; margin:6px 0; color:var(--brand, #7C3AED); font-weight:600;">选好前面的学段与学科后，这里会自动匹配名师。</div>
     <div class="hint" style="margin:6px 0;">三条路任选：① 选一位名师（按学段×学科自动匹配）；② 不选人，直接在下拉里选「<b>不选人 · 直接选一种课堂风格</b>」；③ 在下方自填你喜欢的风格描述。</div>
-    <label>先说说你喜欢的课堂风格（选填 · 系统会据此推荐名师）</label>
+    <label>你希望这节课重点突破什么？（选填 · 系统会据此推荐名师）<br><span class="hint" style="font-weight:400;">可只选研究要素、只选风格，或两者都选——要素优先匹配</span></label>
     <select id="q5_style_guide">
       <option value="">请选择（也可跳过）</option>
       <option value="严谨逻辑型">严谨逻辑型（推理严密、层层递进）</option>
@@ -810,7 +810,7 @@
       <option value="__pick">我自己选名师，不用推荐</option>
     </select>
     <div id="q5_recommend_wrap" class="hidden" style="margin-top:10px;">
-      <div class="hint" style="margin:0 0 6px;">根据你选的风格，推荐这几位名师（点击即选用，并自动给出课例视频入口）：</div>
+      <div class="hint" style="margin:0 0 6px;">根据你的研究要素／风格，推荐这几位名师（点击即选用，并自动给出课例视频入口）：</div>
       <div id="q5_recommend_btns" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
     </div>
     <label>按学段×学科自动匹配名师（选填）</label>
@@ -1268,7 +1268,7 @@ function updateMasterLinks() {
   wrap.classList.remove('hidden');
 }
 
-// 风格 → 名师推荐（按风格关键词匹配当前学段×学科名师池）
+// 研究要素 × 风格 → 名师推荐（双维度综合匹配）
 const STYLE_KEYWORDS = {
   '严谨逻辑型': ['逻辑','推理','严密','思维','结构','理性','思辨'],
   '情感感染型': ['情感','情境','感染','温度','人文','朗读','以情','诗意'],
@@ -1276,30 +1276,61 @@ const STYLE_KEYWORDS = {
   '启发对话型': ['启发','对话','设问','追问','问题','引导','探究','发现'],
   '沉稳大气型': ['沉稳','大气','从容','厚重','朴实','扎实','简约']
 };
-function recommendMastersByStyle(style) {
+const ELEMENT_KEYWORDS = {
+  '情境创设': ['情境','情境化','生活','真实','场景','激趣','导入'],
+  '问题设计': ['问题','设问','追问','问题链','主问题','提问'],
+  '小组合作': ['合作','小组','讨论','交流','协作','互学'],
+  '表达倾听': ['表达','倾听','朗读','发言','表述','对话'],
+  '交流反思': ['反思','交流','评价','追问','元认知','建构'],
+  '当堂检测': ['检测','评价','反馈','练习','当堂','达标','作业']
+};
+function getSelectedElements() {
+  return Array.prototype.filter.call(document.querySelectorAll('#q4_research input[type=checkbox]'), function(cb) {
+    return cb.checked && cb.value !== '__other';
+  }).map(function(cb) { return cb.value; });
+}
+function recommendMasters() {
+  const style = document.getElementById('q5_style_guide').value;
+  const elements = getSelectedElements();
   const level = document.getElementById('q1_level').value;
   const subject = document.getElementById('q1_subject').value;
   const pool = (level && subject) ? (MASTER_POOL[level + '_' + subject] || []) : [];
-  const kws = STYLE_KEYWORDS[style] || [];
-  let matched = pool.filter(m => kws.some(k => (m.style + m.strength).indexOf(k) >= 0));
-  if (!matched.length) matched = pool.slice(0, 2);
-  return matched.slice(0, 3);
+  const scored = pool.map(function(m) {
+    const text = m.style + m.strength;
+    let score = 0; const hits = [];
+    elements.forEach(function(el) {
+      (ELEMENT_KEYWORDS[el] || []).forEach(function(k) {
+        if (text.indexOf(k) >= 0) { score += 3; if (hits.indexOf(el) < 0) hits.push(el); }
+      });
+    });
+    if (style && style !== '__pick') {
+      (STYLE_KEYWORDS[style] || []).forEach(function(k) {
+        if (text.indexOf(k) >= 0) { if (hits.indexOf(style) < 0) hits.push(style); score += 2; }
+      });
+    }
+    return { m: m, score: score, hits: hits };
+  }).filter(function(x) { return x.score > 0; }).sort(function(a, b) { return b.score - a.score; });
+  const picked = scored.length ? scored.slice(0, 3) : pool.slice(0, 2).map(function(m) { return { m: m, score: 0, hits: [] }; });
+  return { list: picked, hasCriteria: !!(elements.length || (style && style !== '__pick')) };
 }
 function renderRecommend() {
   const style = document.getElementById('q5_style_guide').value;
   const wrap = document.getElementById('q5_recommend_wrap');
   const box = document.getElementById('q5_recommend_btns');
-  if (!style || style === '' || style === '__pick') { wrap.classList.add('hidden'); box.innerHTML = ''; return; }
-  const list = recommendMastersByStyle(style);
-  if (!list.length) {
-    box.innerHTML = '<div class="hint">该学段学科暂未收录此风格的名师，可直接在下方自填风格描述，或选「我自己选名师」。</div>';
+  const elements = getSelectedElements();
+  const noStyle = !style || style === '';
+  if ((noStyle || style === '__pick') && !elements.length) { wrap.classList.add('hidden'); box.innerHTML = ''; return; }
+  const res = recommendMasters();
+  if (!res.list.length) {
+    box.innerHTML = '<div class="hint">该学段学科暂无匹配的名师，可直接在下方自填风格或研究要素。</div>';
     wrap.classList.remove('hidden');
     return;
   }
-  box.innerHTML = list.map(function(m) {
-    return '<button type="button" class="rec-btn" data-master="' + m.name + '|' + m.style + '|' + m.strength + '" ' +
+  box.innerHTML = res.list.map(function(x) {
+    const tag = x.hits.length ? ' ｜ 见长：' + x.hits.join('、') : '';
+    return '<button type="button" class="rec-btn" data-master="' + x.m.name + '|' + x.m.style + '|' + x.m.strength + '" ' +
       'style="padding:6px 10px; border:1px solid var(--brand, #7C3AED); background:#fff; color:var(--brand, #7C3AED); border-radius:8px; cursor:pointer; font-size:13px;">' +
-      m.name + ' ｜ ' + m.style + '</button>';
+      x.m.name + ' ｜ ' + x.m.style + tag + '</button>';
   }).join('');
   box.querySelectorAll('.rec-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -1315,7 +1346,7 @@ function renderRecommend() {
   wrap.classList.remove('hidden');
 }
 document.addEventListener('change', function(e) {
-  if (e.target && e.target.id === 'q5_style_guide') renderRecommend();
+  if (e.target && (e.target.id === 'q5_style_guide' || (e.target.closest && e.target.closest('#q4_research')))) renderRecommend();
 });
 document.getElementById('q1_level').addEventListener('change', renderRecommend);
 document.getElementById('q1_subject').addEventListener('change', renderRecommend);
