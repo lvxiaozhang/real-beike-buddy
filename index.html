@@ -828,8 +828,8 @@
   <div class="card">
     <h2><span class="num">6</span>教学设计输出格式</h2>
     <div class="radio-group" id="q6_format">
-      <label><input type="radio" name="q6_format" value="简洁高效版"> 内置教学设计模版（简洁高效版）</label>
-      <label><input type="radio" name="q6_format" value="能力提升版" checked> 内置教学设计模版（能力提升版）</label>
+      <label><input type="radio" name="q6_format" value="简洁高效版"> 内置简洁高效模版</label>
+      <label><input type="radio" name="q6_format" value="能力提升版" checked> 内置能力提升模版</label>
       <label><input type="radio" name="q6_format" value="校本教学设计模板"> 校本教学设计模板</label>
     </div>
     <div class="hint" style="margin-top:8px;">
@@ -1362,8 +1362,8 @@ function getFormat() {
     const custom = document.getElementById('q6_custom').value.trim();
     return custom ? '校本教学设计模版（结构如下）：\n' + custom : '校本教学设计模版（请在下方补充结构）';
   }
-  if (val === '简洁高效版') return '内置教学设计模版（简洁高效版：十章节+四附录，无课堂教学思维结构、无课后反思）';
-  return '内置教学设计模版（能力提升版：十二章节+四附录，含课堂教学思维结构）';
+  if (val === '简洁高效版') return '内置简洁高效模版（十章节+四附录，无课堂教学思维结构、无课后反思）';
+  return '内置能力提升模版（十二章节+四附录，含课堂教学思维结构）';
 }
 
 // 获取学校名
@@ -1523,7 +1523,7 @@ function runSelfCheck(level, subject, topic, research, evidence, whiteboard, sch
   checks.push({label: '学校名称', ok: !!school, required: true});
   const ver = getVersion();
   checks.push({label: '教材版本', ok: !!ver && ver.indexOf('未') < 0, required: false, info: (!!ver && ver.indexOf('未') < 0) ? '' : '（未确认，AI 将按通行版本生成，建议补选）'});
-  const formatNames = {'能力提升版': '内置教学设计模版·能力提升版', '简洁高效版': '内置教学设计模版·简洁高效版', '校本教学设计模板': '校本教学设计模板'};
+  const formatNames = {'能力提升版': '内置能力提升模版', '简洁高效版': '内置简洁高效模版', '校本教学设计模板': '校本教学设计模板'};
   checks.push({label: '输出格式', ok: true, required: true, info: '（' + (formatNames[getRadio('q6_format')] || '') + '）'});
   checks.push({label: '白板品牌', ok: whiteboard !== '品牌待确认', required: false, info: whiteboard === '品牌待确认' ? '（未确认，附录四将出通用建议并标注"品牌待确认"）' : ''});
 
